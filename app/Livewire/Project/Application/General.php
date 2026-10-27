@@ -986,6 +986,7 @@ class General extends Component
 
             return handleError($e, $this);
         } finally {
+            $this->dispatch('resource-name-changed', uuid: $this->application->uuid, name: $this->application->name);
             $this->dispatch('configurationChanged');
         }
     }

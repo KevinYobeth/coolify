@@ -97,6 +97,8 @@ class Edit extends Component
             $this->authorize('update', $this->project);
             $this->syncData(true);
             $this->dispatch('success', 'Project updated.');
+
+            $this->dispatch('project-name-changed', name: $this->project->name, uuid: $this->project->uuid);
         } catch (\Throwable $e) {
             return handleError($e, $this);
         }
