@@ -1,14 +1,24 @@
-@props(['label', 'items', 'title'])
+@props(['label', 'items', 'title', 'current' => null])
 
 <span class="shrink-0 px-0.5 text-neutral-300 dark:text-fg-faint">/</span>
-<div class="relative min-w-0 shrink" x-data="{ open: false, search: '' }" @keydown.escape.window="open = false"
-    @click.outside="open = false">
+<div class="relative min-w-0 shrink"
+    x-data="{
+        open: false,
+        search: '',
+        label: @js($label),
+        names: @js(collect($items)->filter(fn ($item) => isset($item['uuid']))->pluck('label', 'uuid')),
+    }"
+    @keydown.escape.window="open = false" @click.outside="open = false"
+    @resource-name-changed.window="
+        names[$event.detail.uuid] = $event.detail.name;
+        if ($event.detail.uuid === @js($current)) label = $event.detail.name;
+    ">
     <div class="flex h-8 min-w-0 items-center gap-1">
         <button type="button"
             @click="open = !open; if (open) { search = ''; $nextTick(() => $refs.search.focus()) }"
             title="Switch resource"
             class="flex h-8 min-w-0 items-center gap-1.5 rounded-md px-2 opacity-70 transition-[background-color,opacity] hover:bg-neutral-100 hover:opacity-100 dark:hover:bg-white/[0.05]">
-            <span class="min-w-0 truncate font-semibold text-black dark:text-fg">{{ $label }}</span>
+            <span class="min-w-0 truncate font-semibold text-black dark:text-fg" x-text="label">{{ $label }}</span>
             <svg class="size-4 shrink-0 text-neutral-400 dark:text-fg-faint" viewBox="0 0 24 24" fill="none">
                 <path d="M8 9l4-4 4 4M8 15l4 4 4-4" stroke="currentColor" stroke-width="1.6"
                     stroke-linecap="round" stroke-linejoin="round" />
@@ -33,9 +43,9 @@
         </div>
         @foreach ($items as $item)
             <a href="{{ $item['href'] }}" {{ wireNavigate() }} @click="open = false"
-                x-show="@js(strtolower($item['label'])).includes(search.toLowerCase())"
+                x-show="(names[@js($item['uuid'] ?? null)] ?? @js($item['label'])).toLowerCase().includes(search.toLowerCase())"
                 class="listbox-option {{ $item['active'] ? 'bg-neutral-100 font-medium text-black dark:bg-white/[0.07] dark:text-fg' : '' }}">
-                <span class="min-w-0 flex-1 truncate">{{ $item['label'] }}</span>
+                <span class="min-w-0 flex-1 truncate" x-text="names[@js($item['uuid'] ?? null)] ?? @js($item['label'])">{{ $item['label'] }}</span>
             </a>
         @endforeach
     </div>

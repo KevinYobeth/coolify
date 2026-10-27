@@ -39,6 +39,7 @@
             ->sortBy(fn ($item) => strtolower($item['resource']->name))
             ->map(fn ($item) => [
                 'label' => $item['resource']->name,
+                'uuid' => $item['resource']->uuid,
                 'href' => match ($item['type']) {
                     'application' => route('project.application.configuration', [
                         'project_uuid' => $currentProject->uuid,
@@ -207,10 +208,10 @@
     @if ($currentProject)
         <span class="shrink-0 text-neutral-300 dark:text-fg-faint px-0.5">/</span>
         {{-- Project switcher --}}
-        <div class="relative min-w-0 shrink" x-data="{ open: false }" @keydown.escape.window="open = false">
+        <div class="relative min-w-0 shrink" x-data="{ open: false, names: @js($projects->pluck('name', 'uuid')) }" @keydown.escape.window="open = false" @project-name-changed.window="names[$event.detail.uuid] = $event.detail.name">
             <button type="button" @click="open = !open" @click.outside="open = false" title="Switch project"
                 class="flex items-center gap-1.5 min-w-0 max-w-full h-8 px-2 rounded-md opacity-70 transition-[background-color,opacity] hover:opacity-100 hover:bg-neutral-100 dark:hover:bg-white/[0.05]">
-                <span class="min-w-0 truncate font-semibold text-black dark:text-fg">{{ $currentProject->name }}</span>
+                <span class="min-w-0 truncate font-semibold text-black dark:text-fg" x-text="names['{{ $currentProject->uuid }}']">{{ $currentProject->name }}</span>
                 <svg class="size-4 shrink-0 text-neutral-400 dark:text-fg-faint" viewBox="0 0 24 24" fill="none">
                     <path d="M8 9l4-4 4 4M8 15l4 4 4-4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" />
                 </svg>
@@ -223,7 +224,7 @@
                 @foreach ($projects as $p)
                     <a href="{{ route($projectDestinationRoute, ['project_uuid' => $p->uuid]) }}" {{ wireNavigate() }} @click="open = false"
                         class="listbox-option {{ $p->uuid === $currentProject->uuid ? 'bg-neutral-100 font-medium text-black dark:bg-white/[0.07] dark:text-fg' : '' }}">
-                        <span class="min-w-0 flex-1 truncate">{{ $p->name }}</span>
+                        <span class="min-w-0 flex-1 truncate" x-text="names['{{ $p->uuid }}']">{{ $p->name }}</span>
                     </a>
                 @endforeach
             </div>
@@ -257,7 +258,7 @@
     @endif
 
     @if ($currentResource)
-        <x-breadcrumb-switcher title="Resources" :label="$currentResource->name" :items="$resourceItems">
+        <x-breadcrumb-switcher title="Resources" :label="$currentResource->name" :current="$currentResource->uuid" :items="$resourceItems">
             <x-slot:meta>
                 {{-- Below xl, the page heading shows the status. --}}
                 <div class="hidden xl:flex">
